@@ -1,0 +1,12 @@
+{
+  "icon": 2130837504,
+  "themeAuto": 2130968576,
+  "themeLight": 2130968579,
+  "themeDark": 2130968577,
+  "themeAutoNoSplash": 2130968581,
+  "themeLightNoSplash": 2130968580,
+  "themeDarkNoSplash": 2130968578,
+  "iconBackgroundEntry": "res/mipmap-xxhdpi-v4/ic_launcher_bg.png",
+  "iconForegroundEntry": "res/mipmap-xxhdpi-v4/ic_launcher_fg.png",
+  "iconLegacyEntry": "res/mipmap-xxhdpi-v4/ic_launcher.png"
+}

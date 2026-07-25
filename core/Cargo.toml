@@ -1,0 +1,30 @@
+[package]
+name = "sakiika"
+version = "0.1.0"
+edition = "2021"
+description = "Build signed Android WebView APKs from an HTML folder without Android Studio or Gradle"
+
+[[bin]]
+name = "sakiika"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# APK assembly. The finished APK is written byte by byte because the signing
+# block sits between the entry data and the central directory, and entries have
+# to land on 4-byte boundaries — neither is expressible through a zip library.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+crc32fast = "1"
+
+# APK Signature Scheme v2. Pure-Rust so the build needs no C toolchain and the
+# finished tool needs no JVM.
+# The "oid" feature is what lets ecdsa name SHA-256 in a signature algorithm
+# identifier, which the certificate builder needs.
+sha2 = { version = "0.10", features = ["oid"] }
+p256 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+x509-cert = { version = "0.2", features = ["builder"] }
+der = "0.7"
+rand = "0.8"

@@ -1,0 +1,8 @@
+{
+  "//": "WindowsAppSDK 1.6 の MRT PRI 生成タスクは .NET SDK 10 に含まれないため、GUI は SDK 9 でビルドします。",
+  "sdk": {
+    "version": "9.0.0",
+    "rollForward": "latestFeature",
+    "allowPrerelease": false
+  }
+}

@@ -1,0 +1,36 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# .NET / WinUI
+[Bb]in/
+[Oo]bj/
+binrun/
+bin2/
+*.user
+
+# ビルド成果物
+/out/
+/out2/
+/out3/
+/sakiika-out/
+*.apk
+*.aab
+*.apks
+*.idsig
+
+# ただしプリビルド済みランタイムは実行ファイルに埋め込む必須ファイルなので追跡する。
+!core/prebuilt/template.apk
+
+# 署名鍵は絶対にコミットしない。
+# これを失うと Android は同じアプリの更新として受け付けなくなるため、
+# 手元でバックアップし、リポジトリには入れないでください。
+*.pem
+*.jks
+*.keystore
+*.p12
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini

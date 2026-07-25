@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>さきいかビルダー デモ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand">
+    <span class="logo">🦑</span>
+    <div>
+      <h1>さきいかビルダー デモ</h1>
+      <p id="buildline">読み込み中…</p>
+    </div>
+  </div>
+  <button id="themeToggle" class="ghost" title="ダークモード切替">🌙</button>
+</header>
+
+<nav id="tabs" aria-label="機能カテゴリ"></nav>
+
+<main id="panels"></main>
+
+<section id="console" aria-label="実行結果">
+  <div class="console-head">
+    <strong>結果</strong>
+    <span id="lastCall" class="muted"></span>
+    <span class="spacer"></span>
+    <button id="copyResult" class="ghost small">コピー</button>
+    <button id="clearResult" class="ghost small">消去</button>
+  </div>
+  <pre id="result">ボタンを押すと、ここに結果が出ます。</pre>
+</section>
+
+<section id="events" aria-label="イベント">
+  <div class="console-head">
+    <strong>イベント</strong>
+    <span id="eventCount" class="muted">0 件</span>
+    <span class="spacer"></span>
+    <button id="clearEvents" class="ghost small">消去</button>
+  </div>
+  <pre id="eventLog">センサーや位置情報を開始すると、ここに流れます。</pre>
+</section>
+
+<script src="spec.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

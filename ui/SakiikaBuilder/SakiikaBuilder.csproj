@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>SakiikaBuilder</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <!-- Unpackaged: runs as a plain .exe, no MSIX install, no package identity. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>SakiikaBuilder</AssemblyName>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <DefaultLanguage>ja-JP</DefaultLanguage>
+    <!--
+      MRT PRI generation runs Microsoft.Build.Packaging.Pri.Tasks.dll, which
+      ships with Visual Studio rather than the .NET SDK. This app has no .resw
+      files and no ms-appx image resources - only XAML, which compiles to XBF
+      that an unpackaged app loads by path - so skipping PRI keeps the build
+      working with nothing but the .NET SDK installed.
+    -->
+    <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <!-- Program.cs owns Main so startup failures can be logged, not silent. -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260710003" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Rust engine ships next to the GUI so the app works from any folder. -->
+    <None Include="..\..\target\release\sakiika.exe" Condition="Exists('..\..\target\release\sakiika.exe')">
+      <Link>sakiika.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="tools\make-pri.ps1" />
+  </ItemGroup>
+
+  <!--
+    Stands in for the Visual-Studio-only PRI task disabled above. Without a
+    resources.pri, WinUI cannot resolve its own theme resources and the app dies
+    at startup with a XamlParseException, so this is required, not optional.
+  -->
+  <Target Name="SakiikaGeneratePri" AfterTargets="Build"
+          Condition="'$(AppxGeneratePriEnabled)' == 'false'">
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\make-pri.ps1&quot; -OutDir &quot;$(TargetDir.TrimEnd('\'))&quot; -IndexName &quot;$(TargetName)&quot; -IntermediateDir &quot;$(MSBuildProjectDirectory)\$(IntermediateOutputPath.TrimEnd('\'))&quot;"
+          StandardOutputImportance="normal" />
+  </Target>
+
+  <!-- Publish lays the app out again, so the PRI has to be rebuilt there too. -->
+  <Target Name="SakiikaGeneratePriOnPublish" AfterTargets="Publish"
+          Condition="'$(AppxGeneratePriEnabled)' == 'false'">
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\make-pri.ps1&quot; -OutDir &quot;$(PublishDir.TrimEnd('\'))&quot; -IndexName &quot;$(TargetName)&quot; -IntermediateDir &quot;$(MSBuildProjectDirectory)\$(IntermediateOutputPath.TrimEnd('\'))&quot;"
+          StandardOutputImportance="normal" />
+  </Target>
+
+</Project>

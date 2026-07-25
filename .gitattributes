@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+# 埋め込み用のプリビルド成果物。テキスト変換されると壊れます。
+core/prebuilt/template.apk       binary
+core/prebuilt/template-proto.zip binary
+
+*.png binary
+*.apk binary
+*.aab binary
+*.zip binary
+*.jar binary
+
+# PowerShell スクリプトは CRLF で取り出す。先頭の UTF-8 BOM は内容の一部なので
+# そのまま保持される（Windows PowerShell 5.1 は BOM が無いと日本語を誤解釈する）。
+*.ps1 text eol=crlf
