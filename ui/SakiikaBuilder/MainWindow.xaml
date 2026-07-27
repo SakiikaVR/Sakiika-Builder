@@ -198,7 +198,9 @@
                                 <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                     <TextBox x:Name="LightBgBox" Text="#FFFFFF" Width="110" Header="ライト" />
                                     <TextBox x:Name="DarkBgBox" Text="#121212" Width="110" Header="ダーク" />
-                                    <TextBox x:Name="IconBgBox" Text="#1E88E5" Width="110" Header="アイコン背景" />
+                                    <!-- 既定は白。既定アイコンの縁がほぼ白なので、
+                                         前景を縮めた分の余白と継ぎ目が出ない。 -->
+                                    <TextBox x:Name="IconBgBox" Text="#FFFFFF" Width="110" Header="アイコン背景" />
                                 </StackPanel>
 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="アイコン PNG"
