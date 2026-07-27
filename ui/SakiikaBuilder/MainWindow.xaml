@@ -25,7 +25,11 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="🦑" FontSize="34" VerticalAlignment="Center" />
+            <!-- Source is set in code-behind from a file path: an unpackaged app
+                 can only resolve ms-appx:// through a PRI, and this one is built
+                 without the Visual Studio PRI tooling. -->
+            <Image Grid.Column="0" x:Name="BrandImage" Width="40" Height="40"
+                   VerticalAlignment="Center" />
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <TextBlock Text="さきいかビルダー" FontSize="21" FontWeight="SemiBold" />
@@ -380,10 +384,7 @@
                     <Button x:Name="BuildButton" Click="OnBuild"
                             HorizontalAlignment="Stretch" Height="46"
                             Style="{StaticResource AccentButtonStyle}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🔨" FontSize="16" />
-                            <TextBlock Text="APK をビルド" FontSize="15" FontWeight="SemiBold" />
-                        </StackPanel>
+                        <TextBlock Text="ビルド" FontSize="15" FontWeight="SemiBold" />
                     </Button>
 
                     <Grid ColumnSpacing="8">

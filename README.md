@@ -124,6 +124,7 @@ d8             .class                 -> classes.dex
 | 最低 Android バージョン | **8.0（API 26）以上**。アダプティブアイコンと v2 署名の要件です |
 | 署名鍵 | EC P-256（自己署名）。`.jks` は読めません。鍵は PEM で保存・再利用します |
 | ウィンドウ背景色 | 描画前の一瞬だけテンプレート固定色。アプリ内の色は実行時に反映されます（スプラッシュを無効にすればこの一瞬も出ません） |
+| アイコン | アダプティブアイコン。`--icon` で PNG を指定でき、指定しなければ既定のアイコンが入ります。ランチャーは 108dp のうち中央 72dp しか表示しないため、画像は 2/3 に縮めて中央寄せしています |
 | モジュールの取捨選択 | 中身は共通で、実行時に有効・無効を切り替えます（サイズは数十 KB の差） |
 | AAB のモジュール構成 | base モジュールのみ。Dynamic Feature Module には対応しません |
 
@@ -434,6 +435,10 @@ Android 12 以降、スプラッシュ画面は OS が必ず出す仕組みに�
 sakiika/
 ├── build.ps1                    まとめてビルドするスクリプト
 ├── core/                        Rust エンジン
+│   ├── assets/
+│   │   ├── icon-source.png      アイコンの元画像
+│   │   ├── icon-foreground.png  アダプティブアイコンの前景（2/3 に縮めて中央寄せ）
+│   │   └── icon-legacy.png      旧形式の正方アイコン
 │   ├── prebuilt/
 │   │   ├── template.apk         プリビルド済みランタイム（埋め込まれる）
 │   │   ├── template-proto.zip   AAB 用の protobuf リソース
@@ -458,6 +463,16 @@ sakiika/
 │   └── templates/
 │       ├── bridge.js            JS 側のブリッジ
 │       └── java/                Android 側のソース
+├── tools/make-icons.ps1         元画像から各用途のアイコンを書き出す
 ├── ui/SakiikaBuilder/           WinUI 3 GUI
+│   └── Assets/                  GUI のヘッダー画像とウィンドウ/exe アイコン
 └── demo/                        全機能を試せるデモアプリ
+```
+
+アイコンを差し替えるときは `core/assets/icon-source.png` を置き換えて
+`tools\make-icons.ps1` を実行し、テンプレートを作り直します。
+
+```powershell
+.\tools\make-icons.ps1 -Source .\core\assets\icon-source.png -Root .
+.\build.ps1 -Template
 ```

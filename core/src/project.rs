@@ -261,18 +261,19 @@ fn write_template_resources(res_dir: &Path) -> Result<(), String> {
          </adaptive-icon>\n",
     )?;
 
-    let default_bg = Rgba::new(0x1e, 0x88, 0xe5, 0xff);
+    // Placeholders only: every build replaces all three layers, but they have to
+    // exist as resource entries for aapt2 to register them.
     write_bytes(
         &res_dir.join("mipmap-xxhdpi").join("ic_launcher_bg.png"),
-        &png::solid(ICON_SIZE, default_bg)?,
+        &png::solid(ICON_SIZE, Rgba::new(0xff, 0xff, 0xff, 0xff))?,
     )?;
     write_bytes(
         &res_dir.join("mipmap-xxhdpi").join("ic_launcher_fg.png"),
-        &png::default_foreground(ICON_SIZE, Rgba::new(0xff, 0xff, 0xff, 0xff))?,
+        png::default_foreground(),
     )?;
     write_bytes(
         &res_dir.join("mipmap-xxhdpi").join("ic_launcher.png"),
-        &png::default_legacy(ICON_SIZE, default_bg, Rgba::new(0xff, 0xff, 0xff, 0xff))?,
+        png::default_legacy(),
     )?;
     write(
         &res_dir.join("values").join("strings.xml"),
@@ -292,12 +293,7 @@ pub fn icon_layers(
     cfg: &AppConfig,
     ids: &crate::manifest::TemplateIds,
 ) -> Result<Vec<(String, Vec<u8>)>, String> {
-    let background = Rgba::parse(&cfg.icon_background, Rgba::new(0x1e, 0x88, 0xe5, 0xff));
-    let mark = if background.is_light() {
-        Rgba::new(0x11, 0x11, 0x11, 0xff)
-    } else {
-        Rgba::new(0xff, 0xff, 0xff, 0xff)
-    };
+    let background = Rgba::parse(&cfg.icon_background, Rgba::new(0xff, 0xff, 0xff, 0xff));
     for (label, name) in [
         ("背景", &ids.icon_background_entry),
         ("前景", &ids.icon_foreground_entry),
@@ -332,12 +328,9 @@ pub fn icon_layers(
         None => {
             out.push((
                 ids.icon_foreground_entry.clone(),
-                png::default_foreground(ICON_SIZE, mark)?,
+                png::default_foreground().to_vec(),
             ));
-            out.push((
-                ids.icon_legacy_entry.clone(),
-                png::default_legacy(ICON_SIZE, background, mark)?,
-            ));
+            out.push((ids.icon_legacy_entry.clone(), png::default_legacy().to_vec()));
         }
     }
     Ok(out)

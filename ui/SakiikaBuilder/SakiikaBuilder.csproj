@@ -19,6 +19,7 @@
     <AssemblyName>SakiikaBuilder</AssemblyName>
     <EnableMsixTooling>false</EnableMsixTooling>
     <DefaultLanguage>ja-JP</DefaultLanguage>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <!--
       MRT PRI generation runs Microsoft.Build.Packaging.Pri.Tasks.dll, which
       ships with Visual Studio rather than the .NET SDK. This app has no .resw
@@ -42,6 +43,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="tools\make-pri.ps1" />
+
+    <!--
+      Copied rather than embedded as an ms-appx resource: an unpackaged app needs
+      a PRI to resolve those, and this project generates its PRI by hand from the
+      XAML alone. Loading from disk keeps the two independent.
+    -->
+    <None Include="Assets\icon.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

@@ -290,6 +290,8 @@ pub struct AppConfig {
     /// Optional launcher icon. Any square PNG; scaled copies are not generated,
     /// the single image is used for every density.
     pub icon_png: Option<PathBuf>,
+    /// Fills the adaptive icon behind the artwork. White by default so the
+    /// built-in icon, whose own edges are white, has no visible seam.
     pub icon_background: String,
     pub permissions: Vec<String>,
     pub file_access: FileAccess,
@@ -322,7 +324,7 @@ impl Default for AppConfig {
             light_background: "#FFFFFF".to_string(),
             dark_background: "#121212".to_string(),
             icon_png: None,
-            icon_background: "#1E88E5".to_string(),
+            icon_background: "#FFFFFF".to_string(),
             permissions: vec!["INTERNET".to_string()],
             file_access: FileAccess::AppPrivate,
             webview: WebViewOptions::default(),
