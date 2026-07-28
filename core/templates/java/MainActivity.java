@@ -88,6 +88,18 @@ public class MainActivity extends Activity {
 
         setContentView(root);
 
+        // When the splash is disabled, the manifest may use a translucent theme
+        // (that is what suppresses the system splash). The suppression happens
+        // at launch, so the window can turn opaque again right away — which is
+        // required for the status/navigation bar colors to render normally.
+        if (!Cfg.SPLASH && Build.VERSION.SDK_INT >= 30) {
+            try {
+                setTranslucent(false);
+            } catch (Throwable t) {
+                Log.w(Bridge.TAG, "不透明化に失敗しました", t);
+            }
+        }
+
         configureWebView();
         applyTheme(isDark());
 
@@ -444,6 +456,10 @@ public class MainActivity extends Activity {
     public void applyTheme(boolean dark) {
         int bar = Color.parseColor(dark ? Cfg.DARK_BG : Cfg.LIGHT_BG);
         Window window = getWindow();
+        // Material themes set this flag; Theme.Translucent (used to suppress
+        // the splash) does not, and without it the two color calls below are
+        // silently ignored.
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(bar);
         window.setNavigationBarColor(bar);
         View decor = window.getDecorView();
