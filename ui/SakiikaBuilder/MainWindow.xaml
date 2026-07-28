@@ -218,7 +218,7 @@
                                               Header="スプラッシュスクリーン"
                                               OnContent="表示する" OffContent="表示しない（起動を最短にする）" />
                                 <TextBlock Style="{StaticResource SectionHint}" Margin="0"
-                                           Text="オフにすると、起動時のプレビュー画面を無効化し、Android 12 以降のスプラッシュもアニメーション 0 秒＋初回フレームで除去します。" />
+                                           Text="オフにすると半透明テーマへ差し替え、起動プレビューも Android 12 以降のシステムスプラッシュも表示しません (minSdk 28 以上、または画面の向きが固定でないとき。それ以外はアニメーション 0 秒＋初回フレーム除去で実質見えなくします)。" />
                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                                     <TextBox x:Name="SplashBgBox" Text="#1E88E5" Width="130"
                                              Header="スプラッシュ背景色" />

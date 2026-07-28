@@ -20,7 +20,7 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
-use der::Encode;
+use der::{Decode, Encode};
 use p256::ecdsa::{DerSignature, SigningKey};
 use p256::pkcs8::{DecodePrivateKey, EncodePrivateKey, EncodePublicKey};
 use sha2::{Digest, Sha256};
@@ -56,10 +56,12 @@ pub struct Signer {
 }
 
 impl Signer {
-    /// Loads the key from `path`, creating it on first use.
+    /// Loads the key and certificate from `path`, creating both on first use.
     ///
-    /// Keeping the same key across builds matters: Android only accepts an update
-    /// signed by the same certificate as the installed app.
+    /// Keeping the same key across builds is not enough: Android compares the
+    /// certificate **bytes**, and rebuilding a certificate changes them every
+    /// time (fresh validity window, fresh ECDSA signature). So the certificate
+    /// is stored in the pem file next to the key and reused verbatim.
     pub fn load_or_create(path: &Path, subject: &str) -> Result<Signer, String> {
         if path.is_file() {
             return Signer::load(path, subject);
@@ -69,29 +71,66 @@ impl Signer {
                 .map_err(|e| format!("鍵の保存先を作れません {}: {e}", parent.display()))?;
         }
         let key = SigningKey::random(&mut rand::thread_rng());
-        let pem = key
+        let key_pem = key
             .to_pkcs8_pem(der::pem::LineEnding::LF)
             .map_err(|e| format!("鍵を書き出せません: {e}"))?;
-        fs::write(path, pem.as_bytes())
+        let certificate = self_signed_cert(&key, subject)?;
+        let cert_der = certificate
+            .to_der()
+            .map_err(|e| format!("証明書を DER にできません: {e}"))?;
+        let mut contents = key_pem.to_string();
+        contents.push_str(&cert_to_pem(&cert_der)?);
+        fs::write(path, contents.as_bytes())
             .map_err(|e| format!("鍵を保存できません {}: {e}", path.display()))?;
-        Signer::from_key(key, subject)
+        Signer::from_parts(key, certificate)
     }
 
     fn load(path: &Path, subject: &str) -> Result<Signer, String> {
         let pem = fs::read_to_string(path)
             .map_err(|e| format!("鍵を読めません {}: {e}", path.display()))?;
-        let key = SigningKey::from_pkcs8_pem(&pem).map_err(|e| {
+        let key_block = pem_block(&pem, "PRIVATE KEY").unwrap_or(&pem);
+        let key = SigningKey::from_pkcs8_pem(key_block).map_err(|e| {
             format!(
                 "鍵の形式が不正です {}: {e}\n\
                  さきいかビルダーが作った鍵 (.pem) を指定してください。",
                 path.display()
             )
         })?;
-        Signer::from_key(key, subject)
+        match pem_block(&pem, "CERTIFICATE") {
+            // The stored certificate wins — reusing its exact bytes is what keeps
+            // updates installable over an existing install.
+            Some(block) => {
+                let (_, document) = der::Document::from_pem(block)
+                    .map_err(|e| format!("証明書を読めません {}: {e}", path.display()))?;
+                let certificate = x509_cert::Certificate::from_der(document.as_bytes())
+                    .map_err(|e| format!("証明書を解釈できません {}: {e}", path.display()))?;
+                Signer::from_parts(key, certificate)
+            }
+            // A pem written by 0.1.x carries only the key. Build a certificate
+            // once and append it so every later build reuses the same bytes.
+            // (Installs signed by 0.1.x still need a reinstall: their exact
+            // certificate bytes were never saved and cannot be reproduced.)
+            None => {
+                let certificate = self_signed_cert(&key, subject)?;
+                let cert_der = certificate
+                    .to_der()
+                    .map_err(|e| format!("証明書を DER にできません: {e}"))?;
+                let mut contents = pem.clone();
+                if !contents.ends_with('\n') {
+                    contents.push('\n');
+                }
+                contents.push_str(&cert_to_pem(&cert_der)?);
+                fs::write(path, contents.as_bytes())
+                    .map_err(|e| format!("証明書を保存できません {}: {e}", path.display()))?;
+                Signer::from_parts(key, certificate)
+            }
+        }
     }
 
-    fn from_key(key: SigningKey, subject: &str) -> Result<Signer, String> {
-        let certificate = self_signed_cert(&key, subject)?;
+    fn from_parts(
+        key: SigningKey,
+        certificate: x509_cert::Certificate,
+    ) -> Result<Signer, String> {
         let cert_der = certificate
             .to_der()
             .map_err(|e| format!("証明書を DER にできません: {e}"))?;
@@ -107,6 +146,19 @@ impl Signer {
             .map_err(|e| format!("公開鍵を書き出せません: {e}"))?
             .as_bytes()
             .to_vec();
+        let cert_spki = certificate
+            .tbs_certificate
+            .subject_public_key_info
+            .to_der()
+            .map_err(|e| format!("証明書の公開鍵を読めません: {e}"))?;
+        // A certificate for some other key would sign an APK that fails
+        // verification on-device, so catch the mismatch with a clear message.
+        if cert_spki != public_key_der {
+            return Err(
+                "鍵と証明書が一致しません。鍵ファイルが壊れているか、別の鍵の証明書が混ざっています。"
+                    .to_string(),
+            );
+        }
         Ok(Signer {
             key,
             cert_der,
@@ -168,6 +220,27 @@ impl Signer {
         let digest = Sha256::digest(&self.cert_der);
         digest.iter().map(|b| format!("{b:02x}")).collect()
     }
+}
+
+/// Extracts one PEM block (markers included) from `text`.
+///
+/// The key file holds two blocks — PRIVATE KEY and CERTIFICATE — and the pem
+/// parsers in `pkcs8`/`der` each expect to be handed exactly one.
+fn pem_block<'a>(text: &'a str, label: &str) -> Option<&'a str> {
+    let begin = format!("-----BEGIN {label}-----");
+    let end = format!("-----END {label}-----");
+    let start = text.find(&begin)?;
+    let stop = start + text[start..].find(&end)? + end.len();
+    Some(&text[start..stop])
+}
+
+/// Encodes a DER certificate as a PEM block, trailing newline included.
+fn cert_to_pem(cert_der: &[u8]) -> Result<String, String> {
+    let document = der::Document::try_from(cert_der)
+        .map_err(|e| format!("証明書を PEM にできません: {e}"))?;
+    document
+        .to_pem("CERTIFICATE", der::pem::LineEnding::LF)
+        .map_err(|e| format!("証明書を PEM にできません: {e}"))
 }
 
 // ------------------------------------------------------------- DER helpers

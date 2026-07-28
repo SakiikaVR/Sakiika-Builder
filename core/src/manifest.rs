@@ -9,6 +9,11 @@ use crate::catalog;
 use crate::config::{AppConfig, FileAccess, Orientation, ThemeMode};
 use serde::{Deserialize, Serialize};
 
+/// `@android:style/Theme.Translucent.NoTitleBar`. Framework-public style IDs
+/// are stable across every Android version, so the reference needs nothing from
+/// the template's resource table.
+const THEME_TRANSLUCENT_NO_TITLE_BAR: u32 = 0x0103_0010;
+
 /// Resource IDs inside the template APK, produced alongside it at template build
 /// time. Without these the manifest could not reference the icon or a theme.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -247,7 +252,18 @@ fn application_element(cfg: &AppConfig, ids: &TemplateIds) -> Element {
         Orientation::Sensor => orientation::SENSOR,
     };
 
-    let activity = Element::new("activity")
+    // With the splash disabled, a translucent activity is the strongest
+    // suppression available: the OS shows neither the Android 12+ system splash
+    // nor the legacy starting-window preview for translucent windows. Android
+    // 8.0/8.1 throw "Only fullscreen opaque activities can request orientation"
+    // for a translucent activity with a fixed orientation, so the swap is
+    // limited to builds that cannot run there or do not fix the orientation;
+    // everything else falls back to the NoSplash theme's zero-duration splash.
+    let translucent = !cfg.splash.enabled
+        && (cfg.min_sdk >= 28
+            || matches!(cfg.orientation, Orientation::Unspecified | Orientation::Sensor));
+
+    let mut activity = Element::new("activity")
         // Fully qualified: the runtime classes live in their own package, not the
         // app's, so a leading-dot shorthand would resolve to the wrong name.
         .attr(Attr::android(
@@ -284,6 +300,14 @@ fn application_element(cfg: &AppConfig, ids: &TemplateIds) -> Element {
                     Value::Str("android.intent.category.LAUNCHER".to_string()),
                 ))),
         );
+
+    if translucent {
+        activity = activity.attr(Attr::android(
+            "theme",
+            attr::THEME,
+            Value::Ref(THEME_TRANSLUCENT_NO_TITLE_BAR),
+        ));
+    }
 
     let provider = Element::new("provider")
         .attr(Attr::android(
