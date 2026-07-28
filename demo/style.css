@@ -17,7 +17,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-body.dark {
+html.dark, body.dark {
   --bg: #101216;
   --surface: #191c22;
   --surface-2: #22262e;

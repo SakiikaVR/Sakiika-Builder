@@ -584,8 +584,11 @@
   const themeButton = $('#themeToggle');
 
   function paint(dark) {
+    document.documentElement.classList.toggle('dark', dark);
     document.body.classList.toggle('dark', dark);
     themeButton.textContent = dark ? '☀️' : '🌙';
+    // 次回起動の初回描画 (head の同期スクリプト) 用に選択を残す。
+    try { localStorage.setItem('demo-dark', dark ? '1' : '0'); } catch (e) { /* 無視 */ }
   }
 
   async function initTheme() {
@@ -597,7 +600,7 @@
   }
 
   themeButton.addEventListener('click', async () => {
-    const dark = !document.body.classList.contains('dark');
+    const dark = !document.documentElement.classList.contains('dark');
     paint(dark);
     if (online && bridge.ui) {
       // ステータスバーとナビゲーションバーも一緒に切り替える。

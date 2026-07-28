@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>さきいかビルダー デモ</title>
 <link rel="stylesheet" href="style.css">
+<script>
+/* 保存済みテーマを初回描画の前に適用する。ブリッジ応答 (非同期) を待ってから
+   ダーククラスを付けると、その間の 1〜2 フレームがライト配色で描かれて
+   白いフラッシュに見えるため、前回の選択を localStorage から同期で読む。 */
+try {
+  var saved = localStorage.getItem('demo-dark');
+  if (saved === '1' || (saved === null && window.matchMedia
+      && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+} catch (e) { /* localStorage が使えない環境では従来どおり */ }
+</script>
 </head>
 <body>
 
