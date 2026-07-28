@@ -60,6 +60,9 @@ header {
 }
 
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* flex アイテムの min-width は既定が auto なので、これが無いと下の
+   white-space: nowrap の 1 行が縮まず、ページ全体が横に広がってしまう。 */
+.brand > div { min-width: 0; }
 .logo {
   flex: 0 0 auto;
   width: 40px;
@@ -68,7 +71,14 @@ header {
   /* 画像が読めなくてもレイアウトが崩れないよう下地を敷く */
   background: var(--surface-2);
 }
-header h1 { margin: 0; font-size: 17px; font-weight: 650; }
+header h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 header p {
   margin: 0;
   font-size: 12px;
@@ -144,6 +154,9 @@ main { padding: 12px 12px 8px; }
   background: var(--code-bg);
   padding: 2px 7px;
   border-radius: 6px;
+  /* Android.content.settingsList() のような長い識別子でもカードを超えない */
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .card-desc { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
 
@@ -275,6 +288,13 @@ button.ghost.small { padding: 4px 10px; font-size: 12px; }
 }
 .spacer { flex: 1; }
 .muted { color: var(--muted); font-size: 12px; }
+/* 直前に実行したメソッド名。長くても行を押し広げないよう詰める。 */
+#lastCall {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 #result, #eventLog {
   margin: 0;
